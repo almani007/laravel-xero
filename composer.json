@@ -7,7 +7,7 @@
     "php": ">=7.4",
     "illuminate/support": "^8.0|^9.0|^10.0",
     "guzzlehttp/guzzle": "^6.3|^7.0",
-    "calcinai/xero-php": "^3.0"
+    "calcinai/xero-php": "^2.7"
   },
   "autoload": {
     "psr-4": {
@@ -16,14 +16,11 @@
   },
   "extra": {
     "laravel": {
-      "providers": [
-        "Almani\\Xero\\XeroServiceProvider"
-      ],
+      "providers": ["Almani\\Xero\\XeroServiceProvider"],
       "aliases": {
         "Xero": "Almani\\Xero\\Facades\\Xero"
       }
     }
   },
-  "minimum-stability": "stable",
-  "prefer-stable": true
+  "minimum-stability": "stable"
 }
