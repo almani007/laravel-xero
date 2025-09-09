@@ -8,7 +8,7 @@
             "email": "mzulqarnain786@gmail.com",
         }
     ],
-    "homepage": "https://github.com/Almani/laravel-xero",
+    "homepage": " https://github.com/almani007/laravel-xero.git",
     "keywords": ["Laravel", "Xero"],
     "require": {
         "illuminate/support": "5.5.x|5.6.x|5.7.x|5.8.x|6.x|7.x|8.x|9.x|10.x|11.x|12.x",
