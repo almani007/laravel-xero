@@ -1,32 +1,81 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Almani\Xero;
 
+use Almani\Xero\Console\Commands\XeroKeepAliveCommand;
+use Almani\Xero\Console\Commands\XeroShowAllTokensCommand;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use Almani\Xero\Services\XeroService;
 
 class XeroServiceProvider extends ServiceProvider
 {
-    public function register()
+    /**
+     * Perform post-registration booting of services.
+     */
+    public function boot(Router $router): void
     {
-        // Lazy-load the Xero service to prevent config missing errors
-        $this->app->singleton('xero', function ($app) {
-            $config = config('xero', []); // fallback to empty array
-            return new XeroService($config);
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->registerCommands();
+        $this->registerMiddleware($router);
+        $this->configurePublishing();
+    }
+
+    public function registerCommands(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        $this->commands([
+            XeroKeepAliveCommand::class,
+            XeroShowAllTokensCommand::class
+        ]);
+    }
+
+    public function registerMiddleware(Router $router): void
+    {
+        // add middleware
+        $router->aliasMiddleware('XeroAuthenticated', XeroAuthenticated::class);
+    }
+
+    public function configurePublishing(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        // Publishing the configuration file.
+        $this->publishes([
+            __DIR__.'/../config/xero.php' => config_path('xero.php'),
+        ], 'config');
+
+        $timestamp = date('Y_m_d_His', time());
+
+        $this->publishes([
+            __DIR__.'/database/migrations/create_xero_tokens_table.php' => $this->app->databasePath()."/migrations/{$timestamp}_create_xero_tokens_table.php",
+        ], 'migrations');
+    }
+
+    /**
+     * Register any package services.
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../config/xero.php', 'xero');
+
+        // Register the service the package provides.
+        $this->app->singleton('xero', function () {
+            return new Xero;
         });
     }
-    public function boot()
-    {
-        if ($this->app->runningInConsole()) {
-            // Publish the config safely
-            $this->publishes([
-                __DIR__ . '/Config/xero.php' => config_path('xero.php')
-            ], 'config');
 
-            // Example: register commands if needed
-            if (class_exists(Console\SyncXeroInvoices::class)) {
-                $this->commands([Console\SyncXeroInvoices::class]);
-            }
-        }
+    /**
+     * Get the services provided by the provider.
+     */
+    public function provides(): array
+    {
+        return ['xero'];
     }
 }
