@@ -1,0 +1,23 @@
+{
+  "name": "almani/laravel-xero",
+  "description": "Laravel package to integrate Xero accounting API",
+  "type": "library",
+  "require": {
+    "php": ">=8.1",
+    "illuminate/support": "^10.0",
+    "guzzlehttp/guzzle": "^7.0",
+    "calcinai/xero-php": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Almani\\Xero\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": ["Almani\\Xero\\XeroServiceProvider"],
+      "aliases": {"Xero": "Almani\\Xero\\Facades\\Xero"}
+    }
+  },
+  "minimum-stability": "stable"
+}
