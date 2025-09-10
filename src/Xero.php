@@ -137,14 +137,13 @@ class Xero
             throw new RuntimeException('error getting tenant: '.$e->getMessage());
         }
     }
-
     /**
      * Make a connection or return a token where it's valid
      *
-     *
-     * @throws Exception
+     * @throws \Exception
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector | Illuminate\Contracts\Foundation\Application;
      */
-    public function connect(): RedirectResponse|Application|Redirector
+    public function connect()
     {
         // when no code param redirect to Microsoft
         if (request()->has('code')) {
@@ -190,23 +189,25 @@ class Xero
         }
 
         $url = self::$authorizeUrl.'?'.http_build_query([
-            'response_type' => 'code',
-            'client_id' => config('xero.clientId'),
-            'redirect_uri' => config('xero.redirectUri'),
-            'scope' => config('xero.scopes'),
-        ]);
-
-        return redirect()->away($url);
+                'response_type' => 'code',
+                'client_id' => config('xero.clientId'),
+                'redirect_uri' => config('xero.redirectUri'),
+                'scope' => config('xero.scopes'),
+            ]);
+        return redirect()->away(trim($url));
     }
-
-    public function getTokenData(): ?XeroToken
+    /**
+     * Get the Xero token for the current tenant or the first available.
+     *
+     * @return \App\Models\XeroToken|null
+     */
+    public function getTokenData()
     {
         if ($this->tenant_id) {
             $token = XeroToken::where('tenant_id', '=', $this->tenant_id)->first();
         } else {
             $token = XeroToken::first();
         }
-
         if ($token && config('xero.encrypt')) {
             try {
                 $access_token = Crypt::decryptString($token->access_token);
@@ -307,7 +308,14 @@ class Xero
         }
     }
 
-    protected function redirectIfNoToken(XeroToken $token, bool $redirectWhenNotConnected = true): RedirectResponse|bool
+    /**
+     * Redirect if no Xero token exists.
+     *
+     * @param XeroToken $token
+     * @param bool $redirectWhenNotConnected
+     * @return \Illuminate\Http\RedirectResponse|bool
+     */
+    protected function redirectIfNoToken(XeroToken $token, bool $redirectWhenNotConnected = true)
     {
         // Check if tokens exist otherwise run the oauth request
         if (! $this->isConnected() && $redirectWhenNotConnected === true) {
@@ -316,6 +324,7 @@ class Xero
 
         return false;
     }
+
 
     /**
      * run Guzzle to process the requested url
