@@ -12,7 +12,12 @@ class Contacts extends Xero
 {
     protected array $queryString = [];
 
-    public function filter(string $key, string|int $value): self
+    /**
+     * @param string $key
+     * @param string|int $value
+     * @return $this
+     */
+    public function filter(string $key, $value)
     {
         if (! FilterOptions::isValid($key)) {
             throw new InvalidArgumentException("Filter option '$key' is not valid.");
@@ -29,14 +34,14 @@ class Contacts extends Xero
 
         $result = parent::get('Contacts?'.$queryString);
 
-        return $result['body']['Contacts'];
+        return $result['body']['Contacts'] ?? [];
     }
 
     public function find(string $contactId): array
     {
         $result = parent::get('Contacts/'.$contactId);
 
-        return $result['body']['Contacts'][0];
+        return $result['body']['Contacts'][0] ?? [];
     }
 
     public function update(string $contactId, array $data): array

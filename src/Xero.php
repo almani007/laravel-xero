@@ -45,6 +45,17 @@ class Xero
     protected static string $revokeUrl = 'https://identity.xero.com/connect/revocation';
 
     protected string $tenant_id = '';
+    protected ?int $companyId = null;
+
+    public function __construct(?string $tenantId = null, ?int $companyId = null)
+    {
+        if ($tenantId) {
+            $this->tenant_id = $tenantId;
+        }
+        if ($companyId) {
+            $this->companyId = $companyId;
+        }
+    }
 
     /**
      * __call catches all requests when no found method is requested
@@ -75,6 +86,10 @@ class Xero
     public function setTenantId(string $tenant_id): void
     {
         $this->tenant_id = $tenant_id;
+    }
+    public function setCompanyId(int $companyId): void
+    {
+        $this->companyId = $companyId;
     }
 
     public function contacts(): Contacts
@@ -156,7 +171,11 @@ class Xero
                 ];
 
                 $result = $this->sendPost(self::$tokenUrl, $params);
-
+                $company_id = null;
+                if(request()->has('state')) {
+                    $state = json_decode(base64_decode(request('state')), true);
+                    $company_id = $state['company_id'];
+                }
                 try {
                     $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$result['access_token'],
@@ -165,7 +184,6 @@ class Xero
                         ->get(self::$connectionUrl)
                         ->throw()
                         ->json();
-
                     foreach ($response as $tenant) {
                         $tenantData = [
                             'auth_event_id' => $tenant['authEventId'],
@@ -174,9 +192,10 @@ class Xero
                             'tenant_name' => $tenant['tenantName'],
                             'created_date_utc' => $tenant['createdDateUtc'],
                             'updated_date_utc' => $tenant['updatedDateUtc'],
+                            'company_id' => $company_id,
                         ];
 
-                        app(StoreTokenAction::class)($result, $tenantData, $tenant['tenantId']);
+                        app(StoreTokenAction::class)($result, $tenantData, $tenant['tenantId'],$company_id);
                     }
                 } catch (Exception $e) {
                     throw new Exception('Error getting tenant: '.$e->getMessage());
@@ -204,9 +223,9 @@ class Xero
     public function getTokenData()
     {
         if ($this->tenant_id) {
-            $token = XeroToken::where('tenant_id', '=', $this->tenant_id)->first();
+            $token = XeroToken::where('tenant_id', '=', $this->tenant_id)->where('company_id','=',$this->companyId)->orderBy('created_at', 'desc')->first();
         } else {
-            $token = XeroToken::first();
+            $token = XeroToken::orderBy('created_at', 'desc')->first();
         }
         if ($token && config('xero.encrypt')) {
             try {
@@ -262,7 +281,7 @@ class Xero
         $result = $this->sendPost(self::$tokenUrl, $params);
 
         app(tokenExpiredAction::class)($result, $token);
-        app(StoreTokenAction::class)($result, ['tenant_id' => $token->tenant_id], $this->tenant_id);
+        app(StoreTokenAction::class)($result, ['tenant_id' => $token->tenant_id], $this->tenant_id,$this->companyId);
 
         return $result['access_token'];
     }
@@ -349,10 +368,56 @@ class Xero
                 'headers' => $response->getHeaders(),
             ];
         } catch (RequestException $e) {
-            $response = json_decode($e->response->body());
-            throw new Exception($response->Detail ?? "Type: $response?->Type Message: $response?->Message Error Number: $response?->ErrorNumber");
+           /* $response = json_decode($e->response->body());
+            $message = isset($response->Detail)
+                ? $response->Detail
+                : sprintf(
+                    "Type: %s Message: %s Error Number: %s",
+                    isset($response->Type) ? $response->Type : null,
+                    isset($response->Message) ? $response->Message : null,
+                    isset($response->ErrorNumber) ? $response->ErrorNumber : null
+                );
+            throw new \Exception($message);*/
+
+            $statusCode = $e->response->status() ?? null;
+            $responseBody = $e->response ? $e->response->body() : null;
+            $decoded = $responseBody ? json_decode($responseBody) : null;
+
+            // Handle 404 separately
+            if ($statusCode === 404) {
+                \Log::warning('Xero API 404 Not Found', [
+                    'request_url' => self::$baseUrl . $request,
+                    'request_data' => $data,
+                    'response_body' => $responseBody,
+                    'decoded_response' => $decoded,
+                ]);
+
+                // Return null or empty array depending on your logic
+                return [];
+            }
+
+            // For other errors, build safe message
+            $message = $decoded && isset($decoded->Detail)
+                ? $decoded->Detail
+                : sprintf(
+                    "HTTP %s Type: %s Message: %s Error Number: %s",
+                    $statusCode ?? 'N/A',
+                    isset($decoded->Type) ? $decoded->Type : 'N/A',
+                    isset($decoded->Message) ? $decoded->Message : $e->getMessage(),
+                    isset($decoded->ErrorNumber) ? $decoded->ErrorNumber : 'N/A'
+                );
+
+            \Log::error('Xero API RequestException', [
+                'request_url' => self::$baseUrl . $request,
+                'request_data' => $data,
+                'response_body' => $responseBody,
+                'decoded_response' => $decoded,
+                'message' => $message
+            ]);
+
+            throw new \Exception($message);
+           // throw new Exception($response->Detail ?? "Type: $response->Type ?? null Message: $response->Message ?? null Error Number: $response->ErrorNumber ?? null");
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
-    }
-}
+    }}

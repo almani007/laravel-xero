@@ -4,19 +4,29 @@ declare(strict_types=1);
 
 namespace Almani\Xero\Enums;
 
-enum InvoiceStatus: string
+final class InvoiceStatus
 {
-    case Authorised = 'AUTHORISED';
-    case Deleted = 'DELETED';
-    case Draft = 'DRAFT';
-    case Paid = 'PAID';
-    case Submitted = 'SUBMITTED';
-    case Voided = 'VOIDED';
+    public const Authorised = 'AUTHORISED';
+    public const Deleted    = 'DELETED';
+    public const Draft      = 'DRAFT';
+    public const Paid       = 'PAID';
+    public const Submitted  = 'SUBMITTED';
+    public const Voided     = 'VOIDED';
 
+    /**
+     * Validate if a given value is a valid InvoiceStatus
+     */
     public static function isValid(string $value): bool
     {
-        $validValues = array_map(fn (mixed $case) => $case->value, self::cases());
+        $validValues = [
+            self::Authorised,
+            self::Deleted,
+            self::Draft,
+            self::Paid,
+            self::Submitted,
+            self::Voided,
+        ];
 
-        return in_array($value, $validValues);
+        return in_array($value, $validValues, true);
     }
 }

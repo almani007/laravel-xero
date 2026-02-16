@@ -4,21 +4,33 @@ declare(strict_types=1);
 
 namespace Almani\Xero\Enums;
 
-enum FilterOptions: string
+final class FilterOptions
 {
-    case Ids = 'ids';
-    case IncludeArchived = 'includeArchived';
-    case Order = 'order';
-    case Page = 'page';
-    case SearchTerm = 'searchTerm';
-    case SummaryOnly = 'summaryOnly';
-    case Where = 'where';
-    case Statuses = 'Statuses';
+    public const Ids             = 'ids';
+    public const IncludeArchived = 'includeArchived';
+    public const Order           = 'order';
+    public const Page            = 'page';
+    public const SearchTerm      = 'searchTerm';
+    public const SummaryOnly     = 'summaryOnly';
+    public const Where           = 'where';
+    public const Statuses        = 'Statuses';
 
+    /**
+     * Check if value is a valid filter option
+     */
     public static function isValid(string $value): bool
     {
-        $validValues = array_map(fn (mixed $case) => $case->value, self::cases());
+        $validValues = [
+            self::Ids,
+            self::IncludeArchived,
+            self::Order,
+            self::Page,
+            self::SearchTerm,
+            self::SummaryOnly,
+            self::Where,
+            self::Statuses,
+        ];
 
-        return in_array($value, $validValues);
+        return in_array($value, $validValues, true);
     }
 }

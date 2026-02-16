@@ -12,7 +12,14 @@ class CreditNotes extends Xero
 {
     protected array $queryString = [];
 
-    public function filter(string $key, string|int $value): static
+    /**
+     * Apply a filter to the CreditNotes query
+     *
+     * @param string $key
+     * @param mixed  $value
+     * @return self
+     */
+    public function filter(string $key, $value): self
     {
         if (! FilterOptions::isValid($key)) {
             throw new InvalidArgumentException("Filter option '$key' is not valid.");
@@ -23,29 +30,53 @@ class CreditNotes extends Xero
         return $this;
     }
 
+    /**
+     * Fetch credit notes
+     *
+     * @return array
+     */
     public function get(): array
     {
         $queryString = $this->formatQueryStrings($this->queryString);
 
-        $result = parent::get('CreditNotes?'.$queryString);
+        $result = parent::get('CreditNotes?' . $queryString);
 
         return $result['body']['CreditNotes'];
     }
 
-    public function find(string $contactId): array
+    /**
+     * Find a specific credit note
+     *
+     * @param string $creditNoteId
+     * @return array
+     */
+    public function find(string $creditNoteId): array
     {
-        $result = parent::get('CreditNotes/'.$contactId);
+        $result = parent::get('CreditNotes/' . $creditNoteId);
 
         return $result['body']['CreditNotes'][0];
     }
 
-    public function update(string $contactId, array $data): array
+    /**
+     * Update a credit note
+     *
+     * @param string $creditNoteId
+     * @param array  $data
+     * @return array
+     */
+    public function update(string $creditNoteId, array $data): array
     {
-        $result = $this->post('CreditNotes/'.$contactId, $data);
+        $result = $this->post('CreditNotes/' . $creditNoteId, $data);
 
         return $result['body']['CreditNotes'][0];
     }
 
+    /**
+     * Store (create) a new credit note
+     *
+     * @param array $data
+     * @return array
+     */
     public function store(array $data): array
     {
         $result = $this->post('CreditNotes', $data);

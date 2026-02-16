@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Crypt;
 
 class StoreTokenAction
 {
-    public function __invoke(array $token, array $tenantData = [], ?string $tenantId = null): XeroToken
+    public function __invoke(array $token, array $tenantData = [], ?string $tenantId = null, ?int $companyId = null): XeroToken
     {
         $data = [
             'id_token' => $token['id_token'],
@@ -18,6 +18,7 @@ class StoreTokenAction
             'token_type' => $token['token_type'],
             'refresh_token' => config('xero.encrypt') ? Crypt::encryptString($token['refresh_token']) : $token['refresh_token'],
             'scopes' => $token['scope'],
+            'company_id' => $companyId,
         ];
 
         if ($tenantId) {
@@ -31,7 +32,9 @@ class StoreTokenAction
         } else {
             $where = ['id' => 1];
         }
-
+        if ($companyId) {
+            $where = ['company_id' => $companyId];
+        }
         return XeroToken::updateOrCreate($where, $data);
     }
 }

@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Almani\Xero\Enums;
 
-enum InvoiceType: string
+final class InvoiceType
 {
-    case AccPay = 'ACCPAY';
-    case AccRec = 'ACCREC';
+    public const AccPay = 'ACCPAY';
+    public const AccRec = 'ACCREC';
 
+    /**
+     * Validate if a given value is a valid InvoiceType
+     */
     public static function isValid(string $value): bool
     {
-        $validValues = array_map(fn (mixed $case) => $case->value, self::cases());
+        $validValues = [
+            self::AccPay,
+            self::AccRec,
+        ];
 
-        return in_array($value, $validValues);
+        return in_array($value, $validValues, true);
     }
 }

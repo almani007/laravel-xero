@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Almani\Xero\Enums;
 
-enum InvoiceLineAmountType: string
+final class InvoiceLineAmountType
 {
-    case Exclusive = 'Exclusive';
-    case Inclusive = 'Inclusive';
-    case NoTax = 'NoTax';
+    public const Exclusive = 'Exclusive';
+    public const Inclusive = 'Inclusive';
+    public const NoTax     = 'NoTax';
 
+    /**
+     * Check if the given value is a valid LineAmountType
+     */
     public static function isValid(string $value): bool
     {
-        $validValues = array_map(fn (mixed $case) => $case->value, self::cases());
+        $validValues = [
+            self::Exclusive,
+            self::Inclusive,
+            self::NoTax,
+        ];
 
-        return in_array($value, $validValues);
+        return in_array($value, $validValues, true);
     }
 }

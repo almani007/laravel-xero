@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Almani\Xero\Enums;
 
-enum ContactStatus: string
+final class ContactStatus
 {
-    case Active = 'ACTIVE';
-    case Archived = 'ARCHIVED';
-    case GDPRRequest = 'GDPRREQUEST';
+    public const Active      = 'ACTIVE';
+    public const Archived    = 'ARCHIVED';
+    public const GDPRRequest = 'GDPRREQUEST';
 
+    /**
+     * Check if a value is valid contact status
+     */
     public static function isValid(string $value): bool
     {
-        $validValues = array_map(fn (mixed $case) => $case->value, self::cases());
+        $validValues = [
+            self::Active,
+            self::Archived,
+            self::GDPRRequest,
+        ];
 
-        return in_array($value, $validValues);
+        return in_array($value, $validValues, true);
     }
 }
